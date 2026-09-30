@@ -41,3 +41,21 @@ export async function POST(req: Request) {
         console.error("[chat] fatal", err);
         emit({ t: "error", message: "Something went wrong. Please try again." });
       } finally {
+        closed = true;
+        try {
+          controller.close();
+        } catch {
+          /* already closed */
+        }
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store, no-transform", "X-Accel-Buffering": "no" },
+  });
+}
+
+export async function GET() {
+  return fail(405, "Use POST");
+}
