@@ -217,3 +217,16 @@ function BookingRow({ b, table = false }: { b: Row; table?: boolean }) {
     );
   return (
     <li className="grid gap-3 p-4 text-sm md:grid-cols-[170px_1fr_auto] md:items-start">
+      <div>
+        <p className="text-base font-semibold">{team}</p>
+        {visitor && <p className="text-xs text-muted-foreground">visitor: {visitor}</p>}
+        {badges}
+      </div>
+      <div>
+        {who}
+        <p className="mt-1 text-xs text-muted-foreground">{b.topic ? `${b.topic} · ` : ""}booked {bookedOn} via {b.bookedVia}</p>
+      </div>
+      <div>{status}</div>
+    </li>
+  );
+}
