@@ -1,0 +1,59 @@
+{
+  "name": "astareo",
+  "version": "1.0.0",
+  "description": "Astareo - enterprise software company website, backend and AI agent",
+  "scripts": {
+    "dev": "next dev",
+    "build": "tsx scripts/migrate.ts && next build",
+    "build:ci": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
+    "admin:hash": "tsx scripts/hash-password.ts",
+    "ai:check": "tsx --env-file-if-exists=.env.local scripts/check-ai.ts",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@google/genai": "^2.27.0",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.3",
+    "framer-motion": "^14.0.0",
+    "jose": "^6.2.12",
+    "lucide-react": "^1.52.0",
+    "next": "^16.3.8",
+    "nodemailer": "^10.0.15",
+    "postgres": "^3.4.9",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/mailparser": "^3.9.0",
+    "@types/node": "^26.6.4",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/smtp-server": "^3.5.13",
+    "autoprefixer": "^10.6.1",
+    "drizzle-kit": "^0.31.11",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.8",
+    "mailparser": "^3.9.36",
+    "postcss": "^8.5.29",
+    "smtp-server": "^3.19.17",
+    "tailwindcss": "^3.4.19",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20.9"
+  }
+}
