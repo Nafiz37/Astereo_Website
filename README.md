@@ -60,3 +60,72 @@ npm run db:migrate     # applies migrations to DATABASE_URL (also runs automatic
 3. **Gemini key:** create a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
 4. **Email (strongly recommended - without it nobody receives booking confirmations):** the quickest free option is SMTP with a Gmail *App Password* (Google Account → Security → 2-Step Verification → App passwords). Set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`, `NOTIFY_EMAIL`. Alternatively use [Resend](https://resend.com), but it only delivers to arbitrary visitors after you verify a domain. After deploying, press **Send test email** on the `/admin` overview.
 5. **Vercel:** *Add New → Project →* import the repo. Under *Environment Variables* add everything from `.env.example`:
+   `NEXT_PUBLIC_SITE_URL`, `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, `GEMINI_API_KEY`, `SMTP_*` (or `RESEND_API_KEY`), `EMAIL_FROM`, `NOTIFY_EMAIL`.
+   The build command (`npm run build`) applies database migrations automatically.
+6. **Domain:** *Settings → Domains →* add `astareo.tech` and `www.astareo.tech`; point DNS as Vercel instructs (if the domain is on Cloudflare, use DNS-only/grey cloud records or follow Vercel's Cloudflare guide).
+7. **Verify:** open `https://astareo.tech/api/health` → `{"ok":true,"database":true,"ai":true,"email":true,"admin":true}`. Sign in at `/admin`, book a test consultation, chat with the assistant.
+8. Submit `https://astareo.tech/sitemap.xml` in Google Search Console and Bing Webmaster Tools.
+
+> Keep the old site live until you've verified the new one; then switch DNS.
+
+## Languages
+
+- **Routing:** `src/proxy.ts` serves English at unprefixed URLs (internally `/en/…`) and Bangla at `/bn/…`; `/en/…` redirects (308) to the canonical unprefixed URL. All pages live under `src/app/[lang]/`.
+- **UI text:** `src/i18n/en.ts` (source of truth and type) and `src/i18n/bn.ts`. TypeScript forces Bangla to keep the same shape; `tests/i18n.test.ts` also checks array lengths, placeholders and that every select option is translated.
+- **Catalogue content:** Bangla overlays for solutions, industries and case studies in `src/i18n/*.bn.ts` (merged over the English data; English is the fallback).
+- **English-only for now:** blog posts, documentation, whitepapers, API reference, changelog, privacy and terms. These show a small notice on Bangla pages. Legal text should be translated by a qualified person.
+- **Please have a native speaker review the Bangla copy** (it was drafted by AI) before launch.
+- To add a language: add it to `locales` in `src/i18n/config.ts`, create a dictionary and overlays, register them in `src/i18n/dictionaries.ts`/`localize.ts`, and add its font if needed.
+
+## Editing content
+
+All copy lives in `src/content/` (plain TypeScript, no CMS needed):
+
+- `site.ts` — company facts, contact details, hours, claims flags, stats, tech stack, process
+- `solutions.ts`, `industries.ts`, `case-studies.ts` — catalogue pages
+- `posts.ts` (blog), `docs.ts`, `whitepapers.ts`, `company.ts` (pricing models, careers roles, partners, changelog)
+
+Edit → commit → Vercel redeploys. To add an open job, add an item to `openRoles` in `company.ts`.
+
+## Architecture
+
+```
+src/app/(site)/…        public pages (static where possible)
+src/app/admin/…         admin console (server-rendered, cookie-session guarded)
+src/app/api/…           route handlers: leads, newsletter, consultation/*, chat (NDJSON stream), search, health, admin/*
+src/lib/agent/          core.ts (model-agnostic tool loop) · tools.ts · prompt.ts · gemini.ts · chat.ts (persistence)
+src/lib/                scheduling, bookings, leads, email, rate-limit (Postgres), auth (JWT cookie), validation (zod)
+src/db/                 Drizzle schema + driver selection (Postgres in prod, PGlite locally)
+drizzle/                generated SQL migrations
+tests/                  vitest suites
+```
+
+Design decisions worth knowing:
+
+- **Rate limiting in Postgres** so it works across serverless instances without Redis.
+- **Agent core is provider-agnostic** (`ModelFn`), so swapping Gemini for another provider means writing one adapter.
+- **Bookings are race-safe at the database level**, not just in application code.
+- **Email is best-effort**: if Resend is down or unset, forms/bookings still succeed and are visible in `/admin`.
+
+## Security notes
+
+- Admin password is bcrypt-hashed, sessions are signed httpOnly cookies (8 h), login is rate-limited, all admin APIs re-check the session.
+- Public POST endpoints: same-origin check, size limits, zod validation, honeypot, per-IP throttling; IPs are stored only as salted hashes.
+- Security headers (HSTS, `nosniff`, frame and referrer policy) are set in `next.config.ts`. Consider adding a CSP once you add third-party scripts.
+- AI: user text is treated as data; tools validate inputs server-side; bookings require an explicit confirmation flag; tool loops and daily volume are capped.
+
+## Before launch checklist
+
+- [ ] Have a lawyer review `/privacy` and `/terms` (templates reflecting what the site actually does).
+- [ ] Confirm business hours/timezone in `business` (`src/content/site.ts`) and add holidays to `closedDates`.
+- [ ] Decide which claims are provable and set their `verified` flags (see above).
+- [ ] Replace stock photos if you have real ones (all images are Unsplash URLs).
+- [ ] Add real case studies with client approval.
+- [ ] Set up Resend domain verification so emails don't land in spam.
+
+## Known limitations
+
+- Long-form pages (blog, docs, whitepapers, legal) are English-only; everything else is bilingual.
+- Emails (confirmations, notifications) are sent in English.
+- Newsletter sign-ups are collected and exportable, but sending newsletters is not built (use Resend Broadcasts or export the CSV).
+- Career applications take a link to a CV/profile rather than file uploads (keeps the stack free and avoids storing resumes).
