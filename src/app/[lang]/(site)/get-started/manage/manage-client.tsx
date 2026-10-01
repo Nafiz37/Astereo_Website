@@ -139,3 +139,71 @@ export function ManageClient({ id, token }: { id: string; token: string }) {
           <Globe className="h-3.5 w-3.5" /> {tz.replace("_", " ")}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+          <span className={`rounded-full px-2.5 py-1 font-medium ${view.status === "confirmed" ? "bg-emerald-500/15 text-emerald-400" : "bg-secondary text-muted-foreground"}`}>{p.status[view.status] ?? view.status}</span>
+          {view.rescheduleCount > 0 && (
+            <span className="rounded-full bg-secondary px-2.5 py-1 text-muted-foreground">
+              {p.rescheduledTimes} × {count(view.rescheduleCount)}
+            </span>
+          )}
+        </div>
+
+        {!active && <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground"><XCircle className="h-4 w-4" /> {view.isPast && view.status === "confirmed" ? p.past : p.inactive}</p>}
+
+        {active && mode === "view" && (
+          <>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {view.canReschedule && (
+                <Button onClick={() => { setMode("reschedule"); setError(""); }}>
+                  <CalendarClock /> {p.reschedule}
+                </Button>
+              )}
+              <Button variant="ghost" onClick={() => { setMode("cancel"); setError(""); }}>
+                {p.cancel}
+              </Button>
+            </div>
+            {!view.canReschedule && <p className="mt-4 text-xs text-muted-foreground">{p.cutoff.replace("{hours}", count(view.cutoffHours))}</p>}
+          </>
+        )}
+
+        {active && mode === "cancel" && (
+          <div className="mt-6 rounded-xl border border-border bg-secondary/40 p-5">
+            <p className="text-sm">{p.cancelQ}</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button onClick={doCancel} disabled={busy}>
+                {busy && <Loader2 className="animate-spin" />} {busy ? p.cancelling : p.yesCancel}
+              </Button>
+              <Button variant="ghost" onClick={() => setMode("view")} disabled={busy}>
+                {p.keep}
+              </Button>
+            </div>
+          </div>
+        )}
+        {error && (
+          <p role="alert" className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+
+      {active && mode === "reschedule" && (
+        <div className="surface p-6 md:p-8">
+          <h2 className="mb-4 text-lg font-semibold">{p.pickNew}</h2>
+          <SlotPicker tz={tz} value={slot} onChange={setSlot} reloadKey={reloadKey} hideIso={view.startsAt} />
+          {slot && (
+            <p className="mt-4 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">
+              {p.newTime}: {full(slot)}
+            </p>
+          )}
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button onClick={doReschedule} disabled={!slot || busy}>
+              {busy ? <Loader2 className="animate-spin" /> : <CalendarClock />} {busy ? p.moving : p.confirmMove}
+            </Button>
+            <Button variant="ghost" onClick={() => { setMode("view"); setSlot(null); setError(""); }} disabled={busy}>
+              {p.back}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
