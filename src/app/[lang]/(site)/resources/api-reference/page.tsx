@@ -58,3 +58,36 @@ export default async function ApiReferencePage() {
     <>
       <PageHero eyebrow={d.nav.resources} title={d.pages.apiRef.title} description={d.pages.apiRef.desc} />
       <section className="section pt-12">
+        <Container className="max-w-4xl" >
+          <Breadcrumbs items={[{ label: d.nav.resources }, { label: d.pages.apiRef.title }]} />
+          <EnglishOnlyNotice />
+          <div className="surface mb-8 p-5 text-sm text-muted-foreground">
+            <p><strong className="text-foreground">Base URL:</strong> <code className="rounded bg-muted px-1.5 py-0.5">{site.url}</code></p>
+            <p className="mt-2"><strong className="text-foreground">Rate limits:</strong> write endpoints are limited per IP address and return <code className="rounded bg-muted px-1.5 py-0.5">429</code> with a <code className="rounded bg-muted px-1.5 py-0.5">Retry-After</code> header. Validation failures return <code className="rounded bg-muted px-1.5 py-0.5">422</code> with a <code className="rounded bg-muted px-1.5 py-0.5">fields</code> object.</p>
+          </div>
+          <div className="space-y-8">
+            {endpoints.map((e) => (
+              <article key={e.path} className="surface overflow-hidden">
+                <header className="flex flex-wrap items-center gap-3 border-b border-border/60 bg-secondary/40 px-5 py-3">
+                  <span className={`rounded px-2 py-0.5 text-xs font-bold ${e.method === "GET" ? "bg-emerald-500/15 text-emerald-400" : "bg-primary/15 text-primary"}`}>{e.method}</span>
+                  <code className="font-mono text-sm">{e.path}</code>
+                </header>
+                <div className="space-y-4 p-5">
+                  <p className="text-sm text-foreground/85">{e.desc}</p>
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Request</p>
+                    <pre className="overflow-x-auto rounded-lg bg-background p-3 text-xs"><code>{e.request}</code></pre>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Response</p>
+                    <pre className="overflow-x-auto rounded-lg bg-background p-3 text-xs"><code>{e.response}</code></pre>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </Container>
+      </section>
+    </>
+  );
+}
