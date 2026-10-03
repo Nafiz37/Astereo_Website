@@ -26,3 +26,22 @@ export default async function IndustriesPage() {
                   <div className="relative aspect-[16/10] overflow-hidden">
                     <Image src={i.image} alt={i.name} fill sizes="(min-width: 1024px) 380px, (min-width: 768px) 50vw, 100vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                    <span className="absolute bottom-3 left-4 text-3xl" aria-hidden="true">{i.emoji}</span>
+                  </div>
+                  <div className="p-6">
+                    <h2 className="text-lg font-semibold">{i.name}</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">{i.headline}</p>
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                      {d.common.explore} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Container>
+      </section>
+      <PageCta title={d.pageCta.industriesTitle} body={d.pageCta.industriesBody} />
+    </>
+  );
+}
