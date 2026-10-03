@@ -29,3 +29,31 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
       <div className="bg-hero pb-6 pt-32 md:pt-36">
         <Container>
           <Breadcrumbs items={[{ label: d.pages.docs.title, href: "/resources/documentation" }, { label: doc.title }]} />
+          <EnglishOnlyNotice />
+          <div lang="en">
+            <p className="eyebrow mb-2">{doc.category}</p>
+            <h1 className="text-3xl font-bold md:text-5xl">{doc.title}</h1>
+            <p className="mt-3 max-w-2xl text-lg text-muted-foreground">{doc.summary}</p>
+          </div>
+        </Container>
+      </div>
+      <section className="py-10">
+        <Container className="grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <nav aria-label={d.pages.docs.title} className="lg:sticky lg:top-24 lg:self-start" lang="en">
+            <ul className="space-y-1">
+              {docs.map((x) => (
+                <li key={x.slug}>
+                  <Link href={`/resources/documentation/${x.slug}`} aria-current={x.slug === slug ? "page" : undefined} className={cn("block rounded-lg px-3 py-2 text-sm", x.slug === slug ? "bg-primary/15 font-medium text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground")}>
+                    {x.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <article className="max-w-3xl" lang="en"><Prose>{doc.body}</Prose></article>
+        </Container>
+      </section>
+      <PageCta />
+    </>
+  );
+}
