@@ -35,3 +35,18 @@ export default async function PricingPage() {
                   <ButtonLink href="/get-started" variant={featured ? "primary" : "outline"} className="mt-8">{p.cta}</ButtonLink>
                 </article>
               );
+            })}
+          </div>
+          <div className="surface mx-auto mt-10 max-w-3xl p-6 text-center text-sm text-muted-foreground">{p.includes}</div>
+        </Container>
+      </section>
+      <section className="section pt-0">
+        <Container>
+          <SectionHeader eyebrow={d.faq.eyebrow} title={p.faqTitle} />
+          <Faq items={p.faqs} />
+        </Container>
+      </section>
+      <PageCta title={d.pageCta.pricingTitle} body={d.pageCta.pricingBody} />
+    </>
+  );
+}
