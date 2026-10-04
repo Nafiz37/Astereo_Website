@@ -198,3 +198,60 @@ function MobileMenu({ groups }: { groups: NavGroup[] }) {
                 {g.label}
               </Link>
             )}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-6 grid grid-cols-2 gap-3">
+        <ButtonLink href="/contact" variant="ghost">
+          {d.common.contactSales}
+        </ButtonLink>
+        <ButtonLink href="/get-started">{d.common.getStarted}</ButtonLink>
+      </div>
+    </div>
+  );
+}
+
+/** Switches between /pricing and /bn/pricing, keeping the visitor on the equivalent page. */
+function LanguageMenu({ compact = false }: { compact?: boolean }) {
+  const d = useDict();
+  const lang = useLang();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  function choose(target: (typeof locales)[number]) {
+    setOpen(false);
+    if (target === lang) return;
+    const base = stripLocale(pathname);
+    router.push(localizeHref(base, target) + window.location.search + window.location.hash);
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-haspopup="true" aria-label={d.nav.language} className="flex items-center gap-1.5 px-2 py-2 text-sm text-foreground/70 transition-colors hover:text-foreground">
+        <Globe className="h-4 w-4" />
+        {lang === "bn" ? "বাং" : "EN"}
+        {!compact && <ChevronDown className="h-3 w-3" />}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-44 rounded-xl border border-border/70 bg-popover p-1.5 shadow-2xl" role="menu">
+          {locales.map((l) => (
+            <button key={l} type="button" role="menuitemradio" aria-checked={l === lang} lang={l} onClick={() => choose(l)} className={cn("flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-secondary", l === lang && "bg-secondary")}>
+              {localeMeta[l].native}
+              {l === lang && <Check className="h-4 w-4 text-primary" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
