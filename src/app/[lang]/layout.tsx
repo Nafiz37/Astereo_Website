@@ -56,3 +56,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={localeMeta[lang].htmlLang} className={`dark ${inter.variable} ${bengali.variable}`}>
       <body>
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-white">
+          {d.common.skip}
+        </a>
+        {children}
+        <JsonLd data={organization} />
+      </body>
+    </html>
+  );
+}
