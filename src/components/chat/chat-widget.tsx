@@ -187,3 +187,89 @@ export function ChatWidget() {
         </button>
       )}
       {open && (
+        <section role="dialog" aria-label={d.chat.title} className="fixed inset-x-3 bottom-3 z-[60] flex h-[min(640px,calc(100vh-1.5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[400px]">
+          <header className="flex items-center justify-between bg-gradient-to-r from-primary/25 to-brand-purple/25 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20">
+                <Bot className="h-5 w-5 text-primary" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold">{d.chat.title}</p>
+                <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> {d.chat.status}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              {messages.length > 0 && (
+                <button type="button" onClick={reset} className="rounded px-2 py-1 text-xs text-muted-foreground hover:text-foreground">
+                  {d.chat.newChat}
+                </button>
+              )}
+              <button type="button" onClick={() => setOpen(false)} aria-label={d.chat.close} className="rounded p-1.5 text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </header>
+
+          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4" aria-live="polite">
+            {messages.length === 0 && (
+              <div className="space-y-3">
+                <div className="rounded-2xl rounded-tl-sm bg-secondary p-3 text-sm">
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <Sparkles className="h-4 w-4 text-primary" /> {d.chat.greeting}
+                  </p>
+                  <p className="mt-1 text-muted-foreground">{d.chat.intro}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {d.chat.suggestions.map((s) => (
+                    <button key={s} type="button" onClick={() => void send(s)} className="rounded-full border border-primary/40 px-3 py-1.5 text-xs text-primary transition-colors hover:bg-primary/10">
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {messages.map((m) => (
+              <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+                <div className={cn("max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed", m.role === "user" ? "rounded-br-sm bg-primary text-white" : "rounded-tl-sm bg-secondary")}>
+                  {m.text ? (
+                    m.role === "user" ? (
+                      m.text
+                    ) : (
+                      <Formatted text={m.text} />
+                    )
+                  ) : (
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {toolLabel || d.chat.thinking}
+                    </span>
+                  )}
+                  {m.text && busy && m.id === messages[messages.length - 1]?.id && toolLabel && <span className="mt-1 block text-xs text-muted-foreground">{toolLabel}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={onSubmit} className="border-t border-border p-3">
+            <div className="flex items-end gap-2">
+              <label className="flex-1">
+                <span className="sr-only">{d.chat.send}</span>
+                <input value={input} onChange={(e) => setInput(e.target.value)} maxLength={1000} placeholder={d.chat.placeholder} disabled={busy} className="field" autoComplete="off" />
+              </label>
+              <button type="submit" disabled={busy || !input.trim()} aria-label={d.chat.send} className="flex h-[42px] w-[42px] items-center justify-center rounded-lg bg-primary text-white transition-opacity hover:bg-primary/90 disabled:opacity-50">
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="mt-2 text-center text-[10px] text-muted-foreground">
+              {d.chat.disclaimer}{" "}
+              <Link href="/privacy" className="underline">
+                {d.chat.privacy}
+              </Link>
+            </p>
+          </form>
+        </section>
+      )}
+    </>
+  );
+}
