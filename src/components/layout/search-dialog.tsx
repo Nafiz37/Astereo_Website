@@ -93,3 +93,30 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
           <button type="button" onClick={onClose} aria-label={d.search.close} className="rounded p-1 text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
+        </div>
+        <ul className="max-h-[50vh] overflow-y-auto p-2" role="listbox">
+          {!items && <li className="px-3 py-6 text-center text-sm text-muted-foreground">{d.search.loading}</li>}
+          {items && results.length === 0 && (
+            <li className="px-3 py-6 text-center text-sm text-muted-foreground">
+              {d.search.noResults} “{q}”. {d.search.tryThese}
+            </li>
+          )}
+          {results.map((r, idx) => (
+            <li key={r.href} role="option" aria-selected={idx === active}>
+              <button type="button" onMouseEnter={() => setActive(idx)} onClick={() => go(r.href)} className={cn("flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left", idx === active ? "bg-secondary" : "")}>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium">{r.title}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{r.desc}</span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {d.search.types[r.type] ?? r.type}
+                  {idx === active && <CornerDownLeft className="h-3 w-3" />}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
