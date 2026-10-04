@@ -54,3 +54,7 @@ export function NewsletterForm({ source = "footer" }: { source?: string }) {
         <p role="alert" className="mt-2 text-xs text-destructive">
           {msg}
         </p>
+      )}
+    </form>
+  );
+}
