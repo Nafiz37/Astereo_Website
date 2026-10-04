@@ -94,3 +94,71 @@ export function BookingWidget() {
       </div>
     );
   }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      <div className="surface p-6 md:p-8">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <CalendarCheck className="h-5 w-5 text-primary" /> {d.booking.pickTime}
+          </h2>
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Globe className="h-3.5 w-3.5" /> {tz.replace("_", " ")} · {num(minutes)} {d.booking.min}
+          </span>
+        </div>
+        <SlotPicker tz={tz} value={slot} onChange={setSlot} reloadKey={reloadKey} onMinutes={setMinutes} />
+      </div>
+
+      <form onSubmit={onSubmit} noValidate className="surface relative space-y-4 p-6 md:p-8">
+        <Honeypot />
+        <h2 className="text-lg font-semibold">{d.booking.details}</h2>
+        {slot ? <p className="rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">{fmtFull(slot)}</p> : <p className="rounded-lg bg-secondary px-3 py-2 text-sm text-muted-foreground">{d.booking.selectLeft}</p>}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={d.form.fullName} required error={errors.name}>
+            <Input name="name" autoComplete="name" required maxLength={120} />
+          </Field>
+          <Field label={d.form.workEmail} required error={errors.email}>
+            <Input name="email" type="email" autoComplete="email" required maxLength={254} dir="ltr" />
+          </Field>
+          <Field label={d.form.phone} error={errors.phone}>
+            <Input name="phone" type="tel" autoComplete="tel" maxLength={30} dir="ltr" />
+          </Field>
+          <Field label={d.form.company} error={errors.company}>
+            <Input name="company" autoComplete="organization" maxLength={160} />
+          </Field>
+        </div>
+        <Field label={d.booking.discuss} error={errors.topic}>
+          <Select name="topic" options={services} labels={d.options.services} placeholder={d.form.select} />
+        </Field>
+        <Field label={d.booking.anything} error={errors.notes}>
+          <Textarea name="notes" maxLength={2000} placeholder={d.booking.notesPlaceholder} className="min-h-20" />
+        </Field>
+        <label className="flex items-start gap-3 text-sm text-muted-foreground">
+          <input type="checkbox" name="consent" required className="mt-1 h-4 w-4 accent-[hsl(var(--primary))]" />
+          <span>
+            {d.booking.agree}{" "}
+            <Link href="/privacy" className="text-primary underline underline-offset-4">
+              {d.booking.privacy}
+            </Link>
+            {lang === "bn" ? " ।" : "."}
+          </span>
+        </label>
+        {errors.consent && (
+          <p role="alert" className="text-xs text-destructive">
+            {errors.consent}
+          </p>
+        )}
+        {formError && (
+          <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {formError}
+          </p>
+        )}
+        <Button type="submit" size="lg" className="w-full" disabled={status === "sending" || !slot}>
+          {status === "sending" ? <Loader2 className="animate-spin" /> : <CalendarCheck />}
+          {status === "sending" ? d.booking.booking : d.booking.confirm}
+        </Button>
+        <p className="text-center text-xs text-muted-foreground">{d.booking.free}</p>
+      </form>
+    </div>
+  );
+}
