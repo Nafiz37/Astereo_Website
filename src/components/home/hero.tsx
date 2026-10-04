@@ -50,3 +50,23 @@ export async function Hero() {
                   <p className="font-semibold">{a.issuer}</p>
                   <p className="text-xs text-primary">{a.title}</p>
                 </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className="flex flex-wrap items-center justify-center gap-3">
+              {capabilityStrip.map((c, i) => (
+                <li key={c.label} className="flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-sm text-foreground/80">
+                  <Icon name={c.icon} className="h-4 w-4 text-primary" />
+                  {d.hero.capabilities[i] ?? c.label}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5 text-primary" /> {d.hero.trust}
+          </p>
+        </div>
+      </Container>
+    </section>
+  );
+}
