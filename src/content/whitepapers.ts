@@ -127,3 +127,7 @@ Run threat-modelling workshops for new features. Keep a short, rehearsed inciden
 ## Mapping to frameworks
 
 These controls support evidence requirements for frameworks such as ISO 27001, SOC 2 and PCI DSS. Framework alignment is not the same as certification: certification requires an independent audit of your organisation.`,
+  },
+];
+
+export const getWhitepaper = (slug: string) => whitepapers.find((w) => w.slug === slug);
