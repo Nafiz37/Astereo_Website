@@ -103,3 +103,35 @@ Public and internal interfaces are documented, versioned and contract-tested.`,
 - Least-privilege access to cloud accounts and audit logging.
 - Backups with tested restores.
 - Incident response runbooks.
+
+## Compliance support
+
+We design controls that map to frameworks such as ISO 27001, SOC 2, GDPR, HIPAA and PCI DSS and provide documentation to support your own audits.`,
+  },
+  {
+    slug: "deployment-and-handover",
+    title: "Deployment and handover",
+    summary: "What you receive at the end of a project.",
+    category: "Delivery",
+    body: `## Environments
+
+Development, staging and production are defined as code and can be recreated from scratch.
+
+## Pipeline
+
+Pull requests run tests, linting, type checks and security scans. Merges to the main branch deploy to staging; production releases are approved and tagged.
+
+## Documentation
+
+- README and local-setup instructions
+- Architecture overview and decision records
+- Runbooks for deploys, rollbacks, backups and incidents
+- API documentation
+
+## Knowledge transfer
+
+We run walkthrough sessions with your engineers and remain available during a warranty period defined in the contract.`,
+  },
+];
+
+export const getDoc = (slug: string) => docs.find((d) => d.slug === slug);
