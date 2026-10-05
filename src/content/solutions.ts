@@ -227,3 +227,19 @@ export const solutions: Solution[] = [
     overview:
       "Slow, manual releases hide risk. We build CI/CD pipelines, containerised environments and cloud infrastructure so every change is tested, scanned and deployed the same way every time, with monitoring that tells you about problems before customers do.",
     features: [
+      { title: "CI/CD pipelines", desc: "Build, test, scan and deploy automation on GitHub Actions, GitLab CI or Jenkins." },
+      { title: "Infrastructure as code", desc: "Terraform/Pulumi-managed environments that are reproducible and reviewable." },
+      { title: "Containers & Kubernetes", desc: "Docker, orchestration and autoscaling where it genuinely helps." },
+      { title: "DevSecOps", desc: "Dependency, secret and container scanning in the pipeline." },
+      { title: "Observability", desc: "Logs, metrics, traces and alerting with actionable runbooks." },
+      { title: "Cost optimisation", desc: "Right-sizing, budgets and waste detection across cloud accounts." },
+    ],
+    useCases: ["Release automation", "Cloud migration", "Platform engineering", "Reliability and incident readiness"],
+    deliverables: ["Pipeline definitions", "Infrastructure code", "Environment strategy", "Dashboards & alerts", "Runbooks"],
+    tech: ["GitHub Actions", "Terraform", "Docker", "Kubernetes", "Prometheus / Grafana"],
+    faqs: [{ q: "Can you improve our existing pipeline?", a: "Yes. We start with an assessment of lead time, failure rate and recovery time, then prioritise the biggest wins." }],
+    industries: ["finance", "ecommerce", "manufacturing", "healthcare"],
+  },
+];
+
+export const getSolution = (slug: string) => solutions.find((s) => s.slug === slug);
