@@ -68,3 +68,86 @@ Each tool should do one thing, validate its inputs with a strict schema, and enf
 Users, documents and web pages can contain instructions aimed at the model ("ignore your rules and..."). Keep system instructions separate, never give the model secrets it does not need, and never rely on the model to enforce security.
 
 ## 3. Ground answers in your data
+
+Retrieval over your own documents reduces invented answers. Require the agent to say it does not know, and hand off to a person instead.
+
+## 4. Put humans in the loop for consequences
+
+Low-risk actions can run automatically. Anything involving money, deletion or commitments should require confirmation or approval.
+
+## 5. Evaluate continuously
+
+Build a test set of real conversations, including adversarial ones, and run it on every prompt or model change. Track resolution rate, handoff rate and cost per conversation.
+
+## 6. Limit cost and abuse
+
+Rate limit per visitor, cap message length and tool-call loops, and log every tool call for audit.
+
+Start with a narrow, low-risk workflow, measure it, then expand.`,
+  },
+  {
+    slug: "ci-cd-metrics-that-matter",
+    title: "Four CI/CD metrics that actually predict delivery health",
+    excerpt: "Deployment frequency, lead time, change failure rate and time to restore. How to measure them and what to fix first.",
+    date: "2026-08-14",
+    author: "Astareo Engineering",
+    tags: ["DevOps", "CI/CD"],
+    readMinutes: 5,
+    body: `Teams that ship small changes often tend to be more stable, not less. Four widely used measures (popularised by the DORA research programme) make this visible.
+
+## Deployment frequency
+
+How often you release to production. Aim for on-demand releases. If you deploy monthly, the biggest lever is usually shrinking batch size.
+
+## Lead time for changes
+
+Time from commit to production. Long lead times usually come from slow tests, manual approvals or environment contention.
+
+## Change failure rate
+
+The share of deployments that cause an incident or a rollback. Improve it with automated tests, feature flags and progressive rollouts.
+
+## Time to restore service
+
+How quickly you recover when something breaks. Invest in monitoring, one-click rollback and rehearsed runbooks.
+
+## Where to start
+
+Measure all four for a month before changing anything. Fix the worst one, remeasure, repeat. Resist optimising a metric in isolation: the four are meant to be read together.`,
+  },
+  {
+    slug: "choosing-between-lms-build-and-buy",
+    title: "LMS: should you build or buy?",
+    excerpt: "Off-the-shelf learning platforms are great until they are not. A framework for deciding when custom is worth it.",
+    date: "2026-07-22",
+    author: "Astareo Engineering",
+    tags: ["LMS", "Strategy"],
+    readMinutes: 5,
+    body: `Buying an LMS is usually the right first move. Building makes sense when the platform is part of your product or your processes are unusual.
+
+## Buy when
+
+- Your needs are mainstream: courses, quizzes, certificates.
+- You need to launch within weeks.
+- You do not have engineers to maintain a platform.
+
+## Build when
+
+- Learning is your product and the experience is a differentiator.
+- You need deep integration with your own systems (billing, CRM, HR, credentialing).
+- Per-user licence costs will exceed the cost of ownership at your scale.
+- You have strict data-residency or accessibility requirements that vendors cannot meet.
+
+## The hybrid path
+
+Many organisations keep a commercial LMS for content delivery and build custom portals, reporting or integrations around it using APIs and SCORM/xAPI. It lowers risk and keeps the option to replace parts later.
+
+## Questions to answer first
+
+1. What does the first year cost under each option, including integrations?
+2. What happens to your data if the vendor changes pricing?
+3. Which features are truly unique to you?`,
+  },
+];
+
+export const getPost = (slug: string) => posts.find((p) => p.slug === slug);
