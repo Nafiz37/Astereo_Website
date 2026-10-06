@@ -87,3 +87,28 @@ export const chatMessages = pgTable(
     text: text("text").notNull().default(""),
     /** Raw Gemini Content parts, replayed verbatim as conversation history. */
     parts: jsonb("parts").$type<unknown[]>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("chat_messages_session_idx").on(t.sessionId, t.seq)],
+);
+
+export const subscribers = pgTable("subscribers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  source: text("source"),
+  unsubscribeToken: text("unsubscribe_token").notNull(),
+  unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+});
+
+export type Lead = typeof leads.$inferSelect;
+export type NewLead = typeof leads.$inferInsert;
+export type Consultation = typeof consultations.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type Subscriber = typeof subscribers.$inferSelect;
