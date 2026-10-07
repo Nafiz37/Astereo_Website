@@ -114,3 +114,19 @@ export function cancelledEmails(b: Booking, by: "visitor" | "team") {
   const attachments = inviteFor(b, "CANCEL", b.rescheduleCount + 1);
   return {
     toVisitor: {
+      subject: `Your Astareo consultation was cancelled - ${t.visitor}`,
+      html: layout(
+        "Your consultation has been cancelled",
+        `<p>Hi ${esc(b.name.split(" ")[0])}, ${by === "team" ? "we're sorry, but we had to cancel" : "as requested, we have cancelled"} your consultation that was scheduled for:</p>
+         <p style="font-size:18px;font-weight:600"><s>${esc(t.visitor)}</s></p>
+         ${by === "team" ? "<p>Please pick another time and we'll be glad to speak with you.</p>" : "<p>If you change your mind, you're welcome to book another time.</p>"}
+         <p><a href="${bookAgainUrl(b)}" style="display:inline-block;background:#3b82f6;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none">Book a new time</a></p>`,
+      ),
+      attachments,
+    },
+    toTeam: {
+      subject: `[Astareo] Consultation cancelled by ${by === "team" ? "team" : "visitor"}: ${b.name} - ${t.team}`,
+      html: layout("Consultation cancelled", details(b, [["Was scheduled (team)", t.team], ["Cancelled by", by === "team" ? "Astareo team (admin)" : "Visitor"]])),
+    },
+  };
+}
