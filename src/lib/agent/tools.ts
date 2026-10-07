@@ -134,3 +134,102 @@ export function buildTools(ctx: ToolContext): Record<string, ToolHandler> {
       process: engagementProcess.map((p) => `${p.title}: ${p.desc}`),
       engagementModels: engagementModels.map((m) => ({ name: m.name, for: m.tag, description: m.desc })),
       pricing: "No public price list. Pricing depends on scope. Free project assessment and written estimate.",
+      security: compliance.map((c) => ({ standard: c.name, status: c.certified ? "certified" : "we build to align with this standard (not certified)" })),
+      consultation: { durationMin: business.slotMinutes, timezone: business.timezone, responseTarget: business.responseTarget },
+      pages: ["/solutions", "/industries", "/case-studies", "/pricing", "/blog", "/contact", "/get-started"],
+    }),
+
+    get_available_slots: async (args) => {
+      const all = await listOpenSlots();
+      const from = s(args.on_or_after, 10);
+      const max = Math.min(10, Math.max(1, Number(args.max) || 6));
+      const filtered = all.filter((iso) => !from || iso.slice(0, 10) >= from);
+      // Spread across days: at most 3 per business day.
+      const perDay = new Map<string, number>();
+      const picked: string[] = [];
+      for (const iso of filtered) {
+        const day = formatInZone(Date.parse(iso), business.timezone, { weekday: undefined, hour: undefined, minute: undefined, month: "numeric", day: "numeric", year: "numeric" });
+        const n = perDay.get(day) ?? 0;
+        if (n >= 3) continue;
+        perDay.set(day, n + 1);
+        picked.push(iso);
+        if (picked.length >= max) break;
+      }
+      return {
+        slots: picked.map((iso) => ({
+          startsAt: iso,
+          visitorLocal: tz ? formatInZone(Date.parse(iso), tz, { timeZoneName: "short" }) : undefined,
+          teamLocal: formatInZone(Date.parse(iso), business.timezone, { timeZoneName: "short" }),
+        })),
+        durationMin: business.slotMinutes,
+        none: picked.length === 0 ? "No open slots right now. Suggest emailing or calling instead." : undefined,
+      };
+    },
+
+    book_consultation: async (args) => {
+      if (args.user_confirmed !== true) return { error: "Not booked: ask the visitor to explicitly confirm the details first, then call again with user_confirmed=true." };
+      const email = emailField.safeParse(args.email);
+      const name = s(args.name, 120);
+      const startsAt = s(args.startsAt, 40);
+      if (!email.success) return { error: "That email address looks invalid. Ask the visitor to re-enter it." };
+      if (!name || name.length < 2) return { error: "A name is required." };
+      if (!startsAt) return { error: "startsAt is required." };
+      const result = await bookConsultation({
+        startsAt,
+        name,
+        email: email.data,
+        company: s(args.company, 160),
+        phone: s(args.phone, 30),
+        topic: opt(args.topic, services),
+        notes: s(args.notes, 2000),
+        timezone: tz,
+        locale: ctx.lang,
+        via: "chat",
+      });
+      if (!result.ok) {
+        return { booked: false, reason: result.reason, advice: result.reason === "too_many_bookings" ? "They already have upcoming bookings; suggest checking their email." : "Fetch fresh slots with get_available_slots and offer alternatives." };
+      }
+      if (result.booking.leadId) await linkLead(result.booking.leadId);
+      return {
+        booked: true,
+        confirmation: `Booked for ${formatInZone(result.booking.startsAt.getTime(), tz ?? business.timezone, { year: "numeric", timeZoneName: "short" })}`,
+        emailSentTo: email.data,
+        note: "A calendar invite and the video link will be emailed.",
+      };
+    },
+
+    save_lead: async (args) => {
+      const email = emailField.safeParse(args.email);
+      const name = s(args.name, 120);
+      const summary = s(args.summary, 2000);
+      if (!email.success || !name || !summary) return { error: "name, a valid email and a summary are required." };
+      const db = await getDb();
+      const [session] = await db.select().from(tables.chatSessions).where(eq(tables.chatSessions.id, ctx.sessionId)).limit(1);
+      const fields = {
+        name,
+        email: email.data,
+        company: s(args.company, 160),
+        phone: s(args.phone, 30),
+        service: opt(args.service, services),
+        budget: opt(args.budget, budgets),
+        timeline: opt(args.timeline, timelines),
+        message: summary,
+      };
+      if (session?.leadId) {
+        await db.update(tables.leads).set({ ...fields, updatedAt: new Date() }).where(eq(tables.leads.id, session.leadId));
+        return { saved: true, updated: true };
+      }
+      const lead = await createLead({ type: "chat", ...fields, source: "chat", meta: { sessionId: ctx.sessionId } }, { extra: { "Chat session": ctx.sessionId } });
+      await linkLead(lead.id);
+      return { saved: true, message: "The team will follow up within one business day." };
+    },
+
+    request_human: async (args) => {
+      const db = await getDb();
+      await db.update(tables.chatSessions).set({ needsHuman: true, updatedAt: new Date() }).where(eq(tables.chatSessions.id, ctx.sessionId));
+      const mail = leadNotification({ type: "chat (needs human)", name: "Chat visitor", email: "unknown", message: s(args.reason, 1000) ?? "Visitor asked for a human", extra: { "Chat session": ctx.sessionId } });
+      await sendEmail({ to: notifyAddress(), ...mail });
+      return { flagged: true, contact: { email: site.email, phone: site.phoneDisplay }, responseTarget: business.responseTarget };
+    },
+  };
+}
