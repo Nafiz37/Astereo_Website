@@ -37,3 +37,95 @@ export async function handleChat(opts: {
   sessionId?: string;
   message: string;
   timezone?: string;
+  lang?: "en" | "bn";
+  ipHash: string;
+  userAgent?: string;
+  emit: (e: ChatEvent) => void;
+  /** Injectable for tests. Defaults to Gemini. */
+  model?: ModelFn;
+  signal?: AbortSignal;
+}) {
+  const { emit } = opts;
+  const db = await getDb();
+
+  // Global daily budget protects the free Gemini quota from abuse.
+  const budget = Number(process.env.CHAT_DAILY_LIMIT ?? 600);
+  const day = new Date().toISOString().slice(0, 10);
+  const global = await rateLimit(`chat-global:${day}`, budget, 86_400);
+
+  // Resolve or create the session. Unknown ids create a fresh session (never trust the client).
+  let sessionId = opts.sessionId;
+  if (sessionId) {
+    const [found] = await db.select({ id: tables.chatSessions.id }).from(tables.chatSessions).where(eq(tables.chatSessions.id, sessionId)).limit(1);
+    if (!found) sessionId = undefined;
+  }
+  if (!sessionId) {
+    const [created] = await db.insert(tables.chatSessions).values({ ipHash: opts.ipHash, userAgent: opts.userAgent?.slice(0, 300) }).returning({ id: tables.chatSessions.id });
+    sessionId = created.id;
+  }
+  emit({ t: "session", id: sessionId });
+
+  const rows = await db
+    .select({ role: tables.chatMessages.role, parts: tables.chatMessages.parts })
+    .from(tables.chatMessages)
+    .where(eq(tables.chatMessages.sessionId, sessionId))
+    .orderBy(asc(tables.chatMessages.seq));
+
+  const userCount = rows.filter((r) => r.role === "user").length;
+  const persist = async (role: "user" | "model" | "tool", text: string, parts: unknown[]) => {
+    await db.insert(tables.chatMessages).values({ sessionId: sessionId!, role, text, parts });
+    await db.update(tables.chatSessions).set({ updatedAt: new Date() }).where(eq(tables.chatSessions.id, sessionId!));
+  };
+
+  const reply = async (text: string) => {
+    emit({ t: "text", d: text });
+    await persist("user", opts.message, [{ text: opts.message }]);
+    await persist("model", text, [{ text }]);
+    emit({ t: "done" });
+  };
+
+  if (userCount >= MAX_USER_MESSAGES_PER_SESSION) {
+    return reply(LIMIT(opts.lang));
+  }
+  if (!global.allowed) return reply(BUSY(opts.lang));
+
+  const model = opts.model ?? (geminiConfigured() ? geminiModel(systemPrompt(new Date(), opts.timezone, opts.lang)) : null);
+  if (!model) return reply(OFFLINE(opts.lang));
+
+  const tools = buildTools({ sessionId, timezone: opts.timezone, lang: opts.lang });
+  // The user turn is persisted first so it survives model failures.
+  await persist("user", opts.message, [{ text: opts.message }]);
+
+  try {
+    const result = await runAgent({
+      history: rowsToHistory(rows),
+      userMessage: opts.message,
+      model,
+      tools,
+      signal: opts.signal,
+      events: {
+        onText: (d) => emit({ t: "text", d }),
+        onToolStart: (name) => emit({ t: "tool", name }),
+        onTurn: async (turn) => {
+          // The user turn was already stored above.
+          await persist(turn.role, turn.text, turn.parts);
+        },
+      },
+    });
+    if (!result.text.trim()) {
+      emit({ t: "text", d: BUSY(opts.lang) });
+      await persist("model", BUSY(opts.lang), [{ text: BUSY(opts.lang) }]);
+    }
+  } catch (err) {
+    console.error("[chat] model error", err);
+    emit({ t: "text", d: BUSY(opts.lang) });
+    await persist("model", BUSY(opts.lang), [{ text: BUSY(opts.lang) }]);
+  }
+  emit({ t: "done" });
+}
+
+export async function countSessions() {
+  const db = await getDb();
+  const [r] = await db.select({ n: sql<number>`count(*)::int` }).from(tables.chatSessions);
+  return r.n;
+}
