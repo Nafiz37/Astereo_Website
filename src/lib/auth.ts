@@ -45,3 +45,33 @@ export async function createSession(email: string) {
     .setExpirationTime(`${MAX_AGE_SEC}s`)
     .sign(secret());
   (await cookies()).set(COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: MAX_AGE_SEC,
+  });
+}
+
+export async function destroySession() {
+  (await cookies()).delete(COOKIE);
+}
+
+export async function getAdmin(): Promise<{ email: string } | null> {
+  const token = (await cookies()).get(COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
+    if (payload.role !== "admin" || !payload.sub) return null;
+    return { email: payload.sub };
+  } catch {
+    return null;
+  }
+}
+
+/** For server components / pages: redirects to the login screen when unauthenticated. */
+export async function requireAdmin() {
+  const admin = await getAdmin();
+  if (!admin) redirect("/admin/login");
+  return admin;
+}
