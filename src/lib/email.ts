@@ -109,3 +109,47 @@ export function layout(title: string, body: string) {
   return `<!doctype html><html><body style="margin:0;background:#f4f6fb;font-family:Inter,Arial,sans-serif;color:#0f172a">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:12px;overflow:hidden">
+<tr><td style="background:#0a0f1e;padding:20px 28px;color:#fff;font-size:18px;font-weight:600">Astareo</td></tr>
+<tr><td style="padding:28px"><h1 style="font-size:20px;margin:0 0 16px">${esc(title)}</h1>${body}</td></tr>
+<tr><td style="padding:16px 28px;background:#f8fafc;color:#64748b;font-size:12px">${esc(site.legalName)} · ${esc(site.email)} · ${esc(site.phoneDisplay)}</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export const row = (k: string, v: unknown) =>
+  v ? `<tr><td style="padding:6px 12px 6px 0;color:#64748b;vertical-align:top;white-space:nowrap">${esc(k)}</td><td style="padding:6px 0">${esc(v)}</td></tr>` : "";
+
+export function leadNotification(l: {
+  type: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  company?: string | null;
+  service?: string | null;
+  budget?: string | null;
+  timeline?: string | null;
+  message?: string | null;
+  score?: number;
+  extra?: Record<string, unknown>;
+}) {
+  const extra = Object.entries(l.extra ?? {}).map(([k, v]) => row(k, v)).join("");
+  return {
+    subject: `[Astareo] New ${l.type.replace("_", " ")} lead: ${l.name}${l.company ? ` (${l.company})` : ""}`,
+    html: layout(
+      "New lead received",
+      `<table>${row("Type", l.type)}${row("Name", l.name)}${row("Email", l.email)}${row("Phone", l.phone)}${row("Company", l.company)}${row("Service", l.service)}${row("Budget", l.budget)}${row("Timeline", l.timeline)}${row("Score", l.score)}${extra}</table>
+       <p style="white-space:pre-wrap;background:#f8fafc;padding:12px;border-radius:8px">${esc(l.message)}</p>`,
+    ),
+  };
+}
+
+export function autoReply(name: string, kind: "contact" | "partner" | "career" | "chat") {
+  const what = { contact: "your enquiry", partner: "your partnership request", career: "your application", chat: "your conversation" }[kind];
+  return {
+    subject: "We received your message - Astareo",
+    html: layout(
+      `Thanks, ${name.split(" ")[0]}!`,
+      `<p>We have received ${what}. A member of our team will reply within one business day.</p>
+       <p>If it is urgent, call us on <a href="tel:${site.phone}">${esc(site.phoneDisplay)}</a>.</p>`,
+    ),
+  };
+}
