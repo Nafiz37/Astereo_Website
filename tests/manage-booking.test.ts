@@ -165,3 +165,15 @@ describe("cancellation", () => {
     const row = await adminSetBookingStatus(booking.id, "cancelled");
     expect(row?.status).toBe("cancelled");
     const toVisitor = visitorMail(email, /cancelled/);
+    expect(toVisitor?.html).toContain("we had to cancel");
+    expect(teamMail(/cancelled by team/i)).toBeTruthy();
+
+    const other = await book(93);
+    mails.length = 0;
+    await adminSetBookingStatus(other.booking.id, "completed");
+    expect(mails).toHaveLength(0);
+    const db = await getDb();
+    const [r] = await db.select().from(tables.consultations).where(eq(tables.consultations.id, other.booking.id));
+    expect(r.status).toBe("completed");
+  });
+});
