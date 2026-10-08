@@ -18,3 +18,13 @@ export function buildNav(d: Dict, lang: Locale): NavGroup[] {
     {
       label: d.nav.industries,
       items: industriesFor(lang).filter((i) => i.navName && i.navDesc).map((i) => ({ label: i.navName!, desc: i.navDesc, href: `/industries/${i.slug}` })),
+      footer: { ...d.nav.featuredIndustry, href: "/industries" },
+    },
+    {
+      label: d.nav.resources,
+      items: ["/case-studies", "/resources/documentation", "/blog", "/resources/whitepapers", "/resources/api-reference", "/resources/changelog"].map((h) => item(d, h)),
+    },
+    { label: d.nav.pricing, href: "/pricing" },
+    { label: d.nav.company, items: ["/about", "/careers", "/contact", "/partners", "/press"].map((h) => item(d, h)) },
+  ];
+}
