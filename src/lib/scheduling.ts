@@ -103,3 +103,5 @@ export function isValidTimezone(tz: string) {
     return true;
   } catch {
     return false;
+  }
+}
