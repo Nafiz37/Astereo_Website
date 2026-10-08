@@ -160,3 +160,41 @@ export async function rescheduleConsultation(input: { id: string; token: string;
     throw err;
   }
 }
+
+/** Marks a confirmed booking cancelled and emails the visitor and the team. Returns the booking as it was, or null. */
+async function cancelAndNotify(where: ReturnType<typeof and>, by: "visitor" | "team", now = Date.now()) {
+  const db = await getDb();
+  const [row] = await db
+    .update(tables.consultations)
+    .set({ status: "cancelled", cancelledAt: new Date(now) })
+    .where(and(where, eq(tables.consultations.status, "confirmed")))
+    .returning();
+  if (!row) return null;
+  const mails = cancelledEmails(row, by);
+  const [toVisitor, toTeam] = await sendAll([
+    { to: row.email, replyTo: notifyAddress(), ...mails.toVisitor },
+    { to: notifyAddress(), replyTo: row.email, ...mails.toTeam },
+  ]);
+  if (!toVisitor.sent) console.warn(`[booking] cancellation email to visitor not sent (${toVisitor.provider}): ${toVisitor.reason}`);
+  if (!toTeam.sent) console.warn(`[booking] cancellation notification to team not sent (${toTeam.provider}): ${toTeam.reason}`);
+  return row;
+}
+
+/** Visitor cancels with their secret link. Allowed any time before the session starts. */
+export async function cancelConsultation(id: string, token: string, now = Date.now()) {
+  const current = await findBookingByToken(id, token);
+  if (!current || current.startsAt.getTime() <= now) return null;
+  return cancelAndNotify(eq(tables.consultations.id, current.id), "visitor", now);
+}
+
+/** Admin changes a booking's status. Cancelling from the admin also emails the visitor. */
+export async function adminSetBookingStatus(id: string, status: Consultation["status"]) {
+  const db = await getDb();
+  if (status === "cancelled") {
+    const cancelled = await cancelAndNotify(eq(tables.consultations.id, id), "team");
+    if (cancelled) return cancelled;
+    // Not a confirmed booking (e.g. already completed): just record the status, no emails.
+  }
+  const [row] = await db.update(tables.consultations).set({ status }).where(eq(tables.consultations.id, id)).returning();
+  return row ?? null;
+}
