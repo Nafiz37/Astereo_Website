@@ -77,3 +77,9 @@ export const chatSchema = z.object({
 
 export function flattenZodError(err: z.ZodError, lang: Locale = "en") {
   const fields: Record<string, string> = {};
+  for (const issue of err.issues) {
+    const key = issue.path.join(".") || "form";
+    fields[key] ??= translateError(issue.message, lang);
+  }
+  return fields;
+}
